@@ -13,6 +13,7 @@ request.onupgradeneeded = function (event) {
 request.onsuccess = function (event) {
   db = event.target.result;
 
+  //   checks if application is online. if it sends all data to api
   if (navigator.onLine) {
     uploadTransaction();
   }
@@ -23,12 +24,18 @@ request.onerror = function (event) {
 };
 
 function saveRecord(record) {
-  const transaction = db.transation(["budget"], "readwrite");
+  const transaction = db.transaction(["budget"], "readwrite");
+  const store = transaction.objectStore("budget");
+  store.add(record);
+}
+
+function uploadTransaction() {
+  const transaction = db.transaction(["budget"], "readwrite");
   const store = transaction.objectStore("budget");
   const getAll = store.getAll();
 
   getAll.onsuccess = function () {
-    if (gellAll.result.length > 0) {
+    if (getAll.result.length > 0) {
       fetch("api/transaction/bulk", {
         method: "POST",
         body: JSON.stringify(getAll.result),
@@ -45,9 +52,13 @@ function saveRecord(record) {
 
           const transaction = db.transaction(["budget"], "readwrite");
           const store = transaction.objectStore("budget");
+          // clear all items in your store
           store.clear();
         })
-        .catch((err) => console.log(err));
+        .catch((err) => {
+          // set reference to redirect back here
+          console.log(err);
+        });
     }
   };
 }
